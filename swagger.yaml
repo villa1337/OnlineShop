@@ -1,0 +1,309 @@
+openapi: 3.0.0
+info:
+  title: Case Study API
+  description: Case Study API information.
+  version: 0.1.9
+  contact:
+    name: Francisco Villa
+servers:
+  - url: 'http://localhost:8080/'
+    description: Case Study Local Server
+components:
+  securitySchemes:
+    ApiKeyAuth:            
+      name: Authorization
+      type: apiKey
+      in: header
+  schemas:
+    Product:
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        price:
+          type: integer
+        imageUrl:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        userId:
+          type: string
+    OrderProduct:
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        price:
+          type: integer
+        imageUrl:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        userId:
+          type: string
+        orderItem:
+          $ref: '#/components/schemas/OrderItem'
+    OrderItem:
+      properties:
+        id:
+          type: integer
+        quantity:
+          type: integer
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        orderId:
+          type: string
+        productId:
+          type: string
+    User:
+      properties:
+        email:
+          type: string
+          required: true
+        password:
+          type: string
+          required: true
+        name:
+          type: string
+          required: true
+    Cart:
+      properties:
+        id:
+          type: integer
+          required: true
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        userId:
+          type: string
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderProduct'
+    Orders:
+      properties:
+        orders:
+          type: array
+          items: 
+            $ref: '#/components/schemas/Cart'
+
+paths:
+  /auth/signup:
+    put:
+      summary: A login form.
+      description: API in charge of providing the json web token for security purposes. 
+      requestBody:
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+      responses: 
+        '201':
+          description: Successfully created user.
+        '401':
+          description: Invalid credentials.
+  /auth/login:
+    post:
+      summary: A login form.
+      description: API in charge of providing the json web token for security purposes. 
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  required: true
+                password:
+                  type: string
+                  required: true
+      responses: 
+        '201':
+          description: Successfully logged in
+        '401':
+          description: Invalid credentials.
+  /products:
+    get:
+      security:
+        - ApiKeyAuth: []
+      summary: Returns a list of all products.
+      description: Only returns the products that belong to the logged in user.
+      responses:
+        '200':
+          summary: A JSON array of products
+          description: A JSON array of products belonging to logged in user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '401':
+          description: Not authenticated
+  /products/{productId}:
+    get:
+      security:
+        - ApiKeyAuth: []
+      description: Only returns the selected product and that belongs to the logged in user.
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          type: integer
+      responses:
+        '200':
+          description: One product JSON object if any
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '401':
+          description: Not authenticated
+  /add-product:
+    post:
+      security:
+        - ApiKeyAuth: []
+      description: Add one product for the user
+      requestBody:
+        content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    title:
+                      type: string
+                      description: The product title.
+                    imageUrl:
+                      type: string
+                      description: The product image URL.
+                    price:
+                      type: integer
+                      description: Products retail price.
+                    description:
+                      type: string
+                      description: The product's description.
+      responses:
+        '200':
+          summary: Successful response.
+          description: Product added successfully!
+        '401':
+          description: Not authenticated
+  /cart:
+    get:
+      security:
+        - ApiKeyAuth: []
+      description: Use to request all elements on the current user's cart
+      responses:
+        '200':
+          summary: A JSON array of products
+          description: A JSON array of products in logged in user's cart
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '401':
+          description: Not authenticated
+    post:
+      security:
+        - ApiKeyAuth: []
+      description: Add one element to cart
+      requestBody:
+        content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    productId:
+                      type: integer
+                      description: The product ID to add to the cart.
+      responses:
+        '200':
+          summary: Successful response.
+          description: Product added successfully!
+        '401':
+          description: Not authenticated
+  /cart-delete-item:
+    delete:
+      security:
+        - ApiKeyAuth: []
+      description: Use to delete one item from the logged in user's cart.
+      requestBody:
+        content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    productId:
+                      type: integer
+                      description: The product ID to add to the cart.
+      responses:
+        '200':
+          summary: The item was deleted.
+          description: The item was removed from logged in user's cart.
+        '401':
+          description: Not authenticated.
+  /orders:
+    get:
+      security:
+        - ApiKeyAuth: []
+      description: Use to request all orders of the current user
+      responses:
+        '200':
+          summary: A JSON array of products
+          description: A JSON array of products in logged in user's cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Orders'
+        '401':
+          description: Not authenticated
+  /admin/edit-product:
+    put:
+      security:
+        - ApiKeyAuth: []
+      description: Add one product for the user
+      requestBody:
+        content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    productId:
+                      type: integer
+                      description: Id of the product you wish to change
+                    title:
+                      type: string
+                      description: The product title.
+                    imageUrl:
+                      type: string
+                      description: The product image URL.
+                    price:
+                      type: integer
+                      description: Products retail price.
+                    description:
+                      type: string
+                      description: The product's description.
+      responses:
+        '200':
+          summary: Successful response.
+          description: Product updated successfully!
+        '401':
+          description: Not authenticated.
+        '403':
+          description: Not authorized.
